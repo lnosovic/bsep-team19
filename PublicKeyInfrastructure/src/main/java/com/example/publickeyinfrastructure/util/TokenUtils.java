@@ -17,7 +17,7 @@ public class TokenUtils {
     @Value("${jwt.secret}")
     private String secret;
 
-    @Value("${jwt.expiration-in-ms}")
+    @Value("${jwt.expiration}")
     private long expiration;
 
     private SecretKey secretKey;

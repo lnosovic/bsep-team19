@@ -34,7 +34,7 @@ public class VerificationToken {
     }
 
     private LocalDateTime calculateExpiryDate() {
-        return LocalDateTime.now().plusHours(EXPIRATION_MINUTES);
+        return LocalDateTime.now().plusMinutes(EXPIRATION_MINUTES);
     }
     public boolean isExpired() {
         return LocalDateTime.now().isAfter(this.expiryDate);

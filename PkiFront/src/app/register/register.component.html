@@ -1,0 +1,78 @@
+<div class="register-container">
+  <h2>Create Account</h2>
+  <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+    <!-- First Name -->
+    <div class="form-group">
+      <label for="firstName">First Name</label>
+      <input type="text" id="firstName" formControlName="firstName" class="form-control"
+             [class.is-invalid]="f['firstName'].invalid && f['firstName'].touched">
+      <div *ngIf="f['firstName'].invalid && f['firstName'].touched" class="error-message">
+        <span *ngIf="f['firstName'].errors?.['required']">First name is required.</span>
+      </div>
+    </div>
+
+    <!-- Last Name -->
+    <div class="form-group">
+      <label for="lastName">Last Name</label>
+      <input type="text" id="lastName" formControlName="lastName" class="form-control"
+             [class.is-invalid]="f['lastName'].invalid && f['lastName'].touched">
+      <div *ngIf="f['lastName'].invalid && f['lastName'].touched" class="error-message">
+        <span *ngIf="f['lastName'].errors?.['required']">Last name is required.</span>
+      </div>
+    </div>
+
+    <!-- Email -->
+    <div class="form-group">
+      <label for="email">Email</label>
+      <input type="email" id="email" formControlName="email" class="form-control"
+             [class.is-invalid]="f['email'].invalid && f['email'].touched">
+      <div *ngIf="f['email'].invalid && f['email'].touched" class="error-message">
+        <span *ngIf="f['email'].errors?.['required']">Email is required.</span>
+        <span *ngIf="f['email'].errors?.['email']">Please enter a valid email address.</span>
+      </div>
+    </div>
+    
+    <!-- Organization -->
+    <div class="form-group">
+      <label for="organization">Organization (Optional)</label>
+      <input type="text" id="organization" formControlName="organization" class="form-control">
+    </div>
+
+    <!-- Password -->
+    <div class="form-group">
+      <label for="password">Password</label>
+      <input type="password" id="password" formControlName="password" class="form-control"
+             [class.is-invalid]="f['password'].invalid && f['password'].touched">
+      <div *ngIf="f['password'].invalid && f['password'].touched" class="error-message">
+        <span *ngIf="f['password'].errors?.['required']">Password is required.</span>
+      </div>
+      <!-- Password Strength Estimator -->
+      <div class="strength-container" *ngIf="f['password'].value">
+        <div class="strength-meter">
+          <div class="strength-bar" [style.width]="(passwordStrength.score + 1) * 20 + '%'" [ngClass]="'strength-' + passwordStrength.score"></div>
+        </div>
+        <span class="strength-feedback">{{ passwordStrength.feedback }}</span>
+      </div>
+    </div>
+
+    <!-- Confirm Password -->
+    <div class="form-group">
+      <label for="confirmPassword">Confirm Password</label>
+      <input type="password" id="confirmPassword" formControlName="confirmPassword" class="form-control"
+             [class.is-invalid]="f['confirmPassword'].invalid && f['confirmPassword'].touched">
+      <div *ngIf="f['confirmPassword'].invalid && f['confirmPassword'].touched" class="error-message">
+        <span *ngIf="f['confirmPassword'].errors?.['required']">Password confirmation is required.</span>
+        <span *ngIf="f['confirmPassword'].errors?.['mismatch']">Passwords do not match.</span>
+      </div>
+    </div>
+
+    <!-- Success/Error Messages -->
+    <div *ngIf="successMessage" class="alert alert-success">{{ successMessage }}</div>
+    <div *ngIf="errorMessage" class="alert alert-danger">{{ errorMessage }}</div>
+
+    <!-- Submit Button -->
+    <button type="submit" class="submit-btn" [disabled]="isLoading">
+      {{ isLoading ? 'Registering...' : 'Register' }}
+    </button>
+  </form>
+</div>

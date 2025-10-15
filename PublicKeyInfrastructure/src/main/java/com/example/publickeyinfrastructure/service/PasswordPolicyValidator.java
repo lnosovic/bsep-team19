@@ -10,95 +10,96 @@ import java.util.Formatter;
 @Service
 public class PasswordPolicyValidator {
 
-    private static final int MIN_LENGTH = 12;
-    private static final int MIN_ZXCVBN_SCORE = 3; // Zahtevamo skor "Safely unguessable" ili bolji
+    private static final int MIN_LENGTH = 8;
+    private static final int MIN_ZXCVBN_SCORE = 3; // We require a score of "Safely unguessable" or better
 
     /**
-     * Glavna metoda koja pokreće sve provere.
-     * Baca izuzetak ako bilo koja provera ne uspe.
+     * Main method that runs all validations.
+     * Throws an exception if any check fails.
      */
     public void validate(RegisterRequest request) {
         String password = request.getPassword();
 
-        // 1. Provera poklapanja lozinki
         if (!password.equals(request.getConfirmPassword())) {
-            throw new IllegalArgumentException("Lozinke se ne poklapaju.");
+            throw new IllegalArgumentException("Passwords do not match.");
         }
 
-        // 2. Provera minimalne dužine
         if (password.length() < MIN_LENGTH) {
-            throw new IllegalArgumentException("Lozinka mora imati najmanje " + MIN_LENGTH + " karaktera.");
+            throw new IllegalArgumentException("Password must be at least " + MIN_LENGTH + " characters long.");
         }
 
-        // 3. Provera protiv kontekstualnih podataka
         checkAgainstContextualInfo(password, request);
 
-        // 4. Provera jačine pomoću zxcvbn
         checkStrength(password);
 
-        // 5. Provera protiv poznatih procurelih lozinki (Pwned Passwords)
         checkIfPwned(password);
     }
 
     /**
-     * Proverava da lozinka ne sadrži delove imena, prezimena ili email-a.
+     * Checks that the password does not contain parts of the user's first name, last name, or email.
      */
     private void checkAgainstContextualInfo(String password, RegisterRequest request) {
         String lowerCasePassword = password.toLowerCase();
-        if (lowerCasePassword.contains(request.getFirstName().toLowerCase()) ||
-                lowerCasePassword.contains(request.getLastName().toLowerCase()) ||
-                lowerCasePassword.contains(request.getPassword().split("@")[0].toLowerCase())) {
-            throw new IllegalArgumentException("Lozinka ne sme sadržati vaše ime, prezime ili email adresu.");
+
+        String firstName = request.getFirstName();
+        if (firstName != null && !firstName.isBlank() && lowerCasePassword.contains(firstName.toLowerCase())) {
+            throw new IllegalArgumentException("Password must not contain your first name.");
+        }
+
+        String lastName = request.getLastName();
+        if (lastName != null && !lastName.isBlank() && lowerCasePassword.contains(lastName.toLowerCase())) {
+            throw new IllegalArgumentException("Password must not contain your last name.");
+        }
+
+        String email = request.getEmail();
+        if (email != null && !email.isBlank()) {
+            String emailUsername = email.split("@")[0].toLowerCase();
+            if (lowerCasePassword.contains(emailUsername)) {
+                throw new IllegalArgumentException("Password must not contain part of your email address.");
+            }
         }
     }
 
     /**
-     * Koristi zxcvbn biblioteku da proceni jačinu lozinke.
-     * Skorovi: 0 (veoma slaba) do 4 (veoma jaka). Zahtevamo minimum 3.
+     * Uses the zxcvbn library to estimate password strength.
+     * Scores: 0 (very weak) to 4 (very strong). We require a minimum of 3.
      */
     private void checkStrength(String password) {
         Zxcvbn zxcvbn = new Zxcvbn();
         var strength = zxcvbn.measure(password);
 
         if (strength.getScore() < MIN_ZXCVBN_SCORE) {
-            // Možete vratiti i konkretne sugestije korisniku
+            // You can also return specific suggestions to the user
             // String feedback = String.join("\n", strength.getFeedback().getSuggestions());
-            throw new IllegalArgumentException("Lozinka je preslaba. Pokušajte da dodate još reči ili simbola.");
+            throw new IllegalArgumentException("Password is too weak. Try using a longer phrase or a combination of unrelated words.");
         }
     }
 
     /**
-     * Proverava lozinku protiv "Have I Been Pwned" Pwned Passwords API-ja
-     * na bezbedan način (koristeći k-Anonymity).
+     * Checks the password against the "Have I Been Pwned" Pwned Passwords API
+     * in a secure way (using k-Anonymity).
      */
     private void checkIfPwned(String password) {
         try {
-            // 1. Kreiraj SHA-1 heš lozinke
             MessageDigest sha1 = MessageDigest.getInstance("SHA-1");
             byte[] hash = sha1.digest(password.getBytes());
             String hexHash = toHexString(hash);
 
-            // 2. Uzmi prvih 5 karaktera heša za API poziv
             String prefix = hexHash.substring(0, 5);
             String suffix = hexHash.substring(5);
 
-            // 3. Pozovi Pwned Passwords API
             RestTemplate restTemplate = new RestTemplate();
             String apiUrl = "https://api.pwnedpasswords.com/range/" + prefix;
             String response = restTemplate.getForObject(apiUrl, String.class);
 
-            // 4. Proveri da li se ostatak heša (sufiks) nalazi u odgovoru
             if (response != null && response.toUpperCase().contains(suffix.toUpperCase())) {
-                throw new IllegalArgumentException("Ova lozinka je kompromitovana u nekom od prethodnih curenja podataka. Molimo izaberite drugu.");
+                throw new IllegalArgumentException("This password has been exposed in a data breach. Please choose a different one.");
             }
         } catch (NoSuchAlgorithmException e) {
-            // Logovati grešku, ali možda ne blokirati registraciju ako SHA-1 nije dostupan
-            // (što je skoro nemoguće u standardnom Java okruženju)
-            System.err.println("SHA-1 algoritam nije pronađen.");
+
+            System.err.println("SHA-1 algorithm not found.");
         } catch (Exception e) {
-            // Ako API nije dostupan, ne treba blokirati registraciju.
-            // Logovati grešku za buduću analizu.
-            System.err.println("Nije moguće proveriti lozinku protiv Pwned Passwords API-ja: " + e.getMessage());
+            System.err.println("Could not check password against Pwned Passwords API: " + e.getMessage());
         }
     }
 
