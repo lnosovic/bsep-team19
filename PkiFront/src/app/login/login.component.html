@@ -1,0 +1,49 @@
+<div class="login-container">
+  <h2>Login</h2>
+  <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+    <!-- Email -->
+    <div class="form-group">
+      <label for="email">Email</label>
+      <input type="email" id="email" formControlName="email" class="form-control"
+             [class.is-invalid]="f['email'].invalid && f['email'].touched">
+      <div *ngIf="f['email'].invalid && f['email'].touched" class="error-message">
+        <span *ngIf="f['email'].errors?.['required']">Email is required.</span>
+        <span *ngIf="f['email'].errors?.['email']">Please enter a valid email address.</span>
+      </div>
+    </div>
+
+    <!-- Password -->
+    <div class="form-group">
+      <label for="password">Password</label>
+      <input type="password" id="password" formControlName="password" class="form-control"
+             [class.is-invalid]="f['password'].invalid && f['password'].touched">
+      <div *ngIf="f['password'].invalid && f['password'].touched" class="error-message">
+        <span *ngIf="f['password'].errors?.['required']">Password is required.</span>
+      </div>
+    </div>
+
+    <!-- Google reCAPTCHA -->
+    <div class="form-group recaptcha-container">
+      <ngx-recaptcha2
+        #captchaElem
+        [siteKey]="siteKey"
+        formControlName="recaptcha">
+      </ngx-recaptcha2>
+      <div *ngIf="f['recaptcha'].invalid && f['recaptcha'].touched" class="error-message">
+        <span>Please confirm you are not a robot.</span>
+      </div>
+    </div>
+
+    <!-- Error/Success Messages -->
+    <div *ngIf="errorMessage" class="alert alert-danger">{{ errorMessage }}</div>
+
+    <!-- Submit Button -->
+    <button type="submit" class="submit-btn" [disabled]="isLoading">
+      {{ isLoading ? 'Logging in...' : 'Login' }}
+    </button>
+  </form>
+  <div class="redirect-link">
+    <span>Don't have an account? </span>
+    <a routerLink="/register">Register here</a>
+  </div>
+</div>
