@@ -14,7 +14,7 @@ public class EmailService {
         this.javaMailSender = javaMailSender;
     }
     @Async
-    public void sendNotificaitionAsync(String to, String subject){
+    public void sendNotificaitionAsync(String to, String subject, String body){
         System.out.println("Async metoda se izvrsava u drugom Threadu u odnosu na prihvaceni zahtev. Thread id: " + Thread.currentThread().getId());
         //Simulacija duze aktivnosti da bi se uocila razlika
         System.out.println("Slanje emaila...");
@@ -22,8 +22,8 @@ public class EmailService {
         SimpleMailMessage mail = new SimpleMailMessage();
         mail.setTo(to);
         mail.setFrom("Aktivacija naloga");
-        mail.setSubject("Primer slanja emaila pomoću asinhronog Spring taska");
-        mail.setText("Pozdrav");
+        mail.setSubject(subject);
+        mail.setText(body);
         javaMailSender.send(mail);
 
         System.out.println("Email poslat!");
