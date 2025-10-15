@@ -1,0 +1,79 @@
+.dashboard-container {
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 2rem;
+}
+
+.welcome-header {
+  text-align: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #eee;
+}
+
+.welcome-header h1 {
+  margin: 0;
+  color: #333;
+}
+
+.welcome-header p {
+  font-size: 1.1rem;
+  color: #666;
+}
+
+.user-details-card {
+  background-color: #f9f9f9;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.user-details-card h2 {
+  margin-top: 0;
+  color: #007bff;
+}
+
+.user-details-card ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.user-details-card li {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #eee;
+}
+.user-details-card li:last-child {
+  border-bottom: none;
+}
+
+.user-details-card strong {
+  color: #333;
+}
+
+.user-details-card span {
+  color: #555;
+  font-family: monospace;
+}
+
+.actions-section {
+  text-align: center;
+}
+
+.action-btn {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  margin: 0.5rem;
+  border-radius: 5px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.action-btn:hover {
+  background-color: #218838;
+}

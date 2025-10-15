@@ -1,0 +1,28 @@
+<div class="dashboard-container" *ngIf="currentUser">
+  <div class="welcome-header">
+    <h1>Welcome, {{ currentUser!.firstName }} {{ currentUser!.lastName }}!</h1>
+    <p>You are logged in as a user with the role: <strong>{{ currentUser!.role }}</strong></p>
+  </div>
+
+  <div class="user-details-card">
+    <h2>Your Details</h2>
+    <ul>
+      <li><strong>User ID:</strong> <span>{{ currentUser!.userId }}</span></li>
+      <li><strong>Email (Subject):</strong> <span>{{ currentUser!.sub }}</span></li>
+      <li><strong>Token Issued At:</strong> <span>{{ currentUser!.iat * 1000 | date:'medium' }}</span></li>
+      <li><strong>Token Expires At:</strong> <span>{{ currentUser!.exp * 1000 | date:'medium' }}</span></li>
+      <li><strong>JWT ID (JTI):</strong> <span>{{ currentUser!.jti }}</span></li>
+    </ul>
+  </div>
+
+  <div class="actions-section">
+    <h2>Next Steps</h2>
+    <p>From here, you can manage your certificates and passwords.</p>
+    <button class="action-btn">Manage Certificates</button>
+    <button class="action-btn">Open Password Manager</button>
+  </div>
+</div>
+
+<div *ngIf="!currentUser" class="loading-container">
+  <p>Loading user data...</p>
+</div>

@@ -26,7 +26,8 @@ public class UserService {
     private final TokenUtils tokenUtils;
     private final CustomUserDetailsService customUserDetailsService;
     private final PasswordPolicyValidator passwordPolicyValidator;
-    public UserService(UserRepository userRepository, VerificationTokenRepository tokenRepository, PasswordEncoder passwordEncoder, EmailService emailService, AuthenticationManager authenticationManager, TokenUtils tokenUtils, CustomUserDetailsService customUserDetailsService, PasswordPolicyValidator passwordPolicyValidator) {
+    private final RecaptchaService recaptchaService;
+    public UserService(UserRepository userRepository, VerificationTokenRepository tokenRepository, PasswordEncoder passwordEncoder, EmailService emailService, AuthenticationManager authenticationManager, TokenUtils tokenUtils, CustomUserDetailsService customUserDetailsService, PasswordPolicyValidator passwordPolicyValidator, RecaptchaService recaptchaService) {
         this.userRepository = userRepository;
         this.tokenRepository = tokenRepository;
         this.passwordEncoder = passwordEncoder;
@@ -35,6 +36,7 @@ public class UserService {
         this.tokenUtils = tokenUtils;
         this.customUserDetailsService = customUserDetailsService;
         this.passwordPolicyValidator = passwordPolicyValidator;
+        this.recaptchaService = recaptchaService;
     }
     public void register(RegisterRequest request) {
         passwordPolicyValidator.validate(request);
@@ -79,6 +81,7 @@ public class UserService {
     }
 
     public LoginResponse login(LoginRequest request) {
+        recaptchaService.validateToken(request.getRecaptchaToken());
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
         );
