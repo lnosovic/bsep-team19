@@ -9,12 +9,14 @@ import { NgxCaptchaModule } from 'ngx-captcha';
 import { LoginComponent } from './login/login.component';
 import { AuthInterceptor } from './interceptors/auth.interceptor';
 import { CommonModule, DatePipe } from '@angular/common';
+import { CertificateManagementComponent } from './certificate/certificate-management/certificate-management.component';
 
 @NgModule({
   declarations: [
     AppComponent,
     RegisterComponent,
-    LoginComponent
+    LoginComponent,
+    CertificateManagementComponent
   ],
   imports: [
     BrowserModule,
