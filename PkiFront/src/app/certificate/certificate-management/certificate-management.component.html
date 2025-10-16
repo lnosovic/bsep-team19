@@ -39,19 +39,33 @@
           <select id="issuerSerialNumber" formControlName="issuerSerialNumber">
             <option value="">-- Select Issuer --</option>
             <!-- ISPRAVKA: Uklonjen je 'keyvalue' pipe -->
-            <option *ngFor="let cert of certificates" [value]="cert.serialNumber">
+            <option *ngFor="let cert of certificates" [value]="cert.serialNumber.toString()">
               {{ cert.subjectName }} (SN: {{ cert.serialNumber }})
             </option>
           </select>
         </div>
          <div class="form-group">
-            <label for="validFrom">Valid From</label>
-            <input id="validFrom" type="date" formControlName="validFrom">
+          <label for="validFrom">Valid From</label>
+          <input id="validFrom" type="date" formControlName="validFrom" [min]="today">
+          <div *ngIf="createForm.get('validFrom')?.hasError('required') && createForm.get('validFrom')?.touched" class="error-message">
+            This field is required.
+          </div>
         </div>
         <div class="form-group">
-            <label for="validTo">Valid To</label>
-            <input id="validTo" type="date" formControlName="validTo">
+          <label for="validTo">Valid To</label>
+          <input id="validTo" type="date" formControlName="validTo">
+    
+          <!-- DODAJTE OVAJ DIV ZA PRIKAZ GREŠKE -->
+          <div *ngIf="createForm.get('validTo')?.hasError('dateInvalid') && createForm.get('validTo')?.touched" class="error-message">
+            'Valid To' date must be after 'Valid From' date.
+          </div>
         </div>
+      </div>
+      <div *ngIf="createForm.hasError('dateInPast')" class="alert alert-danger">
+        'Valid From' date cannot be in the past.
+      </div>
+      <div *ngIf="createForm.hasError('dateRangeInvalid')" class="alert alert-danger">
+        'Valid To' date must be after 'Valid From' date.
       </div>
       <button type="submit" class="submit-btn" [disabled]="isLoading">
         {{ isLoading ? 'Creating...' : 'Create Certificate' }}

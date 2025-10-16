@@ -8,7 +8,7 @@ import java.util.Date;
 @Data
 public class CertificateDTO {
     private Long id;
-    private BigInteger serialNumber;
+    private String serialNumber;
     private String subjectName;
     private String issuerName;
     private Date validFrom;
