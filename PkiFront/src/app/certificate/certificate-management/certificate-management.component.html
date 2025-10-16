@@ -1,0 +1,91 @@
+<div class="container">
+  <h1>Certificate Management</h1>
+
+  <!-- Forma za kreiranje sertifikata -->
+  <div class="form-card">
+    <h2>Create New Certificate</h2>
+    <form [formGroup]="createForm" (ngSubmit)="onSubmit()">
+      <div class="form-grid">
+        <div class="form-group">
+            <label for="commonName">Common Name (CN)</label>
+            <input id="commonName" type="text" formControlName="commonName">
+        </div>
+        <div class="form-group">
+            <label for="organization">Organization (O)</label>
+            <input id="organization" type="text" formControlName="organization">
+        </div>
+        <div class="form-group">
+            <label for="organizationalUnit">Organizational Unit (OU)</label>
+            <input id="organizationalUnit" type="text" formControlName="organizationalUnit">
+        </div>
+        <div class="form-group">
+            <label for="country">Country (C)</label>
+            <input id="country" type="text" formControlName="country" placeholder="e.g., RS">
+        </div>
+        <div class="form-group">
+            <label for="email">Email Address</label>
+            <input id="email" type="email" formControlName="email">
+        </div>
+        <div class="form-group">
+          <label for="certificateType">Certificate Type</label>
+          <select id="certificateType" formControlName="certificateType">
+            <option value="ROOT_CA">Root CA</option>
+            <option value="INTERMEDIATE_CA">Intermediate CA</option>
+            <option value="END_ENTITY">End-Entity</option>
+          </select>
+        </div>
+        <div class="form-group" *ngIf="createForm.get('certificateType')?.value !== 'ROOT_CA'">
+          <label for="issuerSerialNumber">Issuer Certificate</label>
+          <select id="issuerSerialNumber" formControlName="issuerSerialNumber">
+            <option value="">-- Select Issuer --</option>
+            <!-- ISPRAVKA: Uklonjen je 'keyvalue' pipe -->
+            <option *ngFor="let cert of certificates" [value]="cert.serialNumber">
+              {{ cert.subjectName }} (SN: {{ cert.serialNumber }})
+            </option>
+          </select>
+        </div>
+         <div class="form-group">
+            <label for="validFrom">Valid From</label>
+            <input id="validFrom" type="date" formControlName="validFrom">
+        </div>
+        <div class="form-group">
+            <label for="validTo">Valid To</label>
+            <input id="validTo" type="date" formControlName="validTo">
+        </div>
+      </div>
+      <button type="submit" class="submit-btn" [disabled]="isLoading">
+        {{ isLoading ? 'Creating...' : 'Create Certificate' }}
+      </button>
+    </form>
+    <div *ngIf="successMessage" class="alert alert-success">{{ successMessage }}</div>
+    <div *ngIf="errorMessage" class="alert alert-danger">{{ errorMessage }}</div>
+  </div>
+
+  <!-- Tabela sa postojećim sertifikatima -->
+  <div class="table-card">
+    <h2>Existing Certificates</h2>
+    <div *ngIf="isLoading && certificates.length === 0">Loading certificates...</div>
+    <table *ngIf="certificates.length > 0">
+      <thead>
+        <tr>
+          <th>Serial Number</th>
+          <th>Subject</th>
+          <th>Issuer</th>
+          <th>Valid From</th>
+          <th>Valid To</th>
+          <th>Is CA</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let cert of certificates">
+          <td class="serial-number">{{ cert.serialNumber }}</td>
+          <td>{{ cert.subjectName }}</td>
+          <td>{{ cert.issuerName }}</td>
+          <td>{{ cert.validFrom | date:'medium' }}</td>
+          <td>{{ cert.validTo | date:'medium' }}</td>
+          <td>{{ cert.ca ? 'Yes' : 'No' }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

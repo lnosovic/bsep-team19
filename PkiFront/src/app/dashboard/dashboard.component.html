@@ -15,10 +15,10 @@
     </ul>
   </div>
 
-  <div class="actions-section">
+  <div class="actions-section" *ngIf="canManageCertificates">
     <h2>Next Steps</h2>
     <p>From here, you can manage your certificates and passwords.</p>
-    <button class="action-btn">Manage Certificates</button>
+    <button class="action-btn" routerLink="/certificates">Manage Certificates</button>
     <button class="action-btn">Open Password Manager</button>
   </div>
 </div>
