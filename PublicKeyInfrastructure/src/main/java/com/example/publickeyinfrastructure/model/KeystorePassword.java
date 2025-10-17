@@ -1,11 +1,15 @@
 package com.example.publickeyinfrastructure.model;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Table(name = "keystore_password")
 @Data
+@Getter
+@Setter
 @NoArgsConstructor
 public class KeystorePassword {
 

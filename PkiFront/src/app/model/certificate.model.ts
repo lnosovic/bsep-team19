@@ -18,4 +18,5 @@ export interface NewCertificateDTO {
   validTo: string;
   certificateType: 'ROOT_CA' | 'INTERMEDIATE_CA' | 'END_ENTITY';
   issuerSerialNumber?: string;
+  alias?: string;
 }

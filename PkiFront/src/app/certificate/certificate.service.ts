@@ -20,4 +20,10 @@ export class CertificateService {
   createCertificate(data: NewCertificateDTO): Observable<string> {
     return this.http.post(`${this.apiUrl}/create`, data, { responseType: 'text' });
   }
+  downloadCertificate(serialNumber: string): Observable<Blob> {
+    // Korišćenje 'blob' kao responseType je ključno!
+    return this.http.get(`${this.apiUrl}/download/${serialNumber}`, {
+      responseType: 'blob' 
+    });
+  }
 }

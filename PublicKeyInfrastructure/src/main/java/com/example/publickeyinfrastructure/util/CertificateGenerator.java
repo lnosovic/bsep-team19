@@ -1,8 +1,6 @@
 package com.example.publickeyinfrastructure.util;
 
-import org.bouncycastle.asn1.x509.BasicConstraints;
-import org.bouncycastle.asn1.x509.Extension;
-import org.bouncycastle.asn1.x509.KeyUsage;
+import org.bouncycastle.asn1.x509.*;
 import org.bouncycastle.cert.X509v3CertificateBuilder;
 import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
 import org.bouncycastle.operator.ContentSigner;
@@ -32,10 +30,25 @@ public class CertificateGenerator {
         }
 
         // Key Usage
-        if(isCa) {
+        if (isCa) {
             certGen.addExtension(Extension.keyUsage, true, new KeyUsage(KeyUsage.digitalSignature | KeyUsage.keyCertSign | KeyUsage.cRLSign));
         } else {
             certGen.addExtension(Extension.keyUsage, true, new KeyUsage(KeyUsage.digitalSignature | KeyUsage.keyEncipherment));
+
+            // =======================================================
+            // =====            DODAVANJE SAN EKSTENZIJE           =====
+            // =======================================================
+            // Dodajemo SAN ekstenziju samo za end-entity sertifikate.
+            // Ovo je ključno za servere i klijente.
+            GeneralNames subjectAltNames = new GeneralNames(new GeneralName[]{
+                    new GeneralName(GeneralName.dNSName, "localhost"),
+                    new GeneralName(GeneralName.iPAddress, "127.0.0.1")
+            });
+
+            // `false` znači da ekstenzija nije kritična. Ako browser ne razume SAN,
+            // može da ga ignoriše (mada svi moderni browseri ga razumeju i zahtevaju).
+            certGen.addExtension(Extension.subjectAlternativeName, false, subjectAltNames);
+            // =======================================================
         }
 
         return certGen.build(contentSigner);

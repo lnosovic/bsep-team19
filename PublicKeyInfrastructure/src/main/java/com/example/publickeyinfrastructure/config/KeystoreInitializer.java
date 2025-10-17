@@ -16,7 +16,7 @@ import java.util.UUID;
 public class KeystoreInitializer {
 
     private static final Logger logger = LoggerFactory.getLogger(KeystoreInitializer.class);
-    private static final String KEYSTORE_FILE = "keystore.jks";
+    public static final String KEYSTORE_FILE_PATH = "keystore.jks";
 
     private final KeystorePasswordRepository passwordRepository;
 
@@ -34,8 +34,8 @@ public class KeystoreInitializer {
         if (passwordRepository.count() == 0) {
             logger.info("Keystore master password not found in DB. Creating a new one...");
 
-            File keystoreFile = new File(KEYSTORE_FILE);
-            String randomKeystorePassword = UUID.randomUUID().toString();
+            File keystoreFile = new File(KEYSTORE_FILE_PATH);
+            String randomKeystorePassword = UUID.randomUUID().toString().replace("-", "");
             char[] passwordChars = randomKeystorePassword.toCharArray();
 
             KeyStore keyStore = KeyStore.getInstance("JKS");

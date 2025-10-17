@@ -11,6 +11,11 @@
             <input id="commonName" type="text" formControlName="commonName">
         </div>
         <div class="form-group">
+            <label for="alias">Alias (Optional)</label>
+            <input id="alias" type="text" formControlName="alias" placeholder="e.g., tomcat-ssl">
+            <small>Leave empty to use Serial Number as alias.</small>
+        </div>
+        <div class="form-group">
             <label for="organization">Organization (O)</label>
             <input id="organization" type="text" formControlName="organization">
         </div>
@@ -98,6 +103,11 @@
           <td>{{ cert.validFrom | date:'medium' }}</td>
           <td>{{ cert.validTo | date:'medium' }}</td>
           <td>{{ cert.ca ? 'Yes' : 'No' }}</td>
+          <td>
+            <button class="action-btn" (click)="onDownload(cert.serialNumber)">
+              Download
+            </button>
+          </td>     
         </tr>
       </tbody>
     </table>

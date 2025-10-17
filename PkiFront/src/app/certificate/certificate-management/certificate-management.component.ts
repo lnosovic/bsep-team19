@@ -31,6 +31,7 @@ export class CertificateManagementComponent implements OnInit {
   ngOnInit(): void {
     this.createForm = this.fb.group({
       commonName: ['', Validators.required],
+      alias: [''],
       organization: ['', Validators.required],
       organizationalUnit: ['', Validators.required],
       country: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(4)]],
@@ -83,18 +84,48 @@ export class CertificateManagementComponent implements OnInit {
     if (formData.certificateType === 'ROOT_CA') {
       delete formData.issuerSerialNumber;
     }
-
+    if (!formData.alias || formData.alias.trim() === '') {
+          delete formData.alias;
+    }
     this.certificateService.createCertificate(formData).subscribe({
       
       next: (response) => {
         this.successMessage = response;
         this.isLoading = false;
-        this.createForm.reset({ certificateType: 'END_ENTITY' }); // Resetuj formu
+        this.createForm.reset({ certificateType: 'END_ENTITY',alias: '' }); // Resetuj formu
         this.loadCertificates(); // Ponovo učitaj listu
       },
       error: (err) => {
         this.errorMessage = err.error?.message || err.error || 'Certificate creation failed.';
         this.isLoading = false;
+      }
+    });
+  }
+  onDownload(serialNumber: string): void {
+    this.certificateService.downloadCertificate(serialNumber).subscribe({
+      next: (blob) => {
+        // 1. Kreiramo URL za blob objekat
+        const url = window.URL.createObjectURL(blob);
+
+        // 2. Kreiramo privremeni <a> (link) element
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${serialNumber}.cer`; // Ime fajla za preuzimanje
+
+        // 3. Dodajemo link u dokument (neće biti vidljiv)
+        document.body.appendChild(a);
+
+        // 4. Simuliramo klik na link da bi se pokrenulo preuzimanje
+        a.click();
+
+        // 5. Uklanjamo link i oslobađamo URL
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      },
+      error: (err) => {
+        // Ažurirajte poruku o grešci da bude vidljiva korisniku
+        this.errorMessage = `Failed to download certificate with SN ${serialNumber}.`;
+        console.error(err);
       }
     });
   }
@@ -148,4 +179,5 @@ export function dateRangeValidator(): ValidatorFn {
 
     return null; // Vrati null ako je sve validno
   };
+  
 }

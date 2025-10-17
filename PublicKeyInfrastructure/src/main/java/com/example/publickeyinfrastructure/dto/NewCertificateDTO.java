@@ -15,4 +15,5 @@ public class NewCertificateDTO {
     private Date validTo;
     private String certificateType;
     private String issuerSerialNumber;
+    private String alias;
 }
