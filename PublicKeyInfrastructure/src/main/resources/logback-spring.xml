@@ -1,0 +1,34 @@
+<configuration>
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+
+    <!-- Definicija gde se čuvaju logovi -->
+    <property name="LOG_FILE" value="logs/pki-app.log"/>
+
+    <!-- Appender za konzolu (korisno za razvoj) -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${CONSOLE_LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Appender za fajl sa ROTACIJOM i JSON formatom -->
+    <appender name="FILE_JSON" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_FILE}.json</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- Rotacija na dnevnom nivou -->
+            <fileNamePattern>${LOG_FILE}.%d{yyyy-MM-dd}.json.gz</fileNamePattern>
+            <!-- Čuvaj logove 30 dana -->
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <includeMdc>true</includeMdc>
+        </encoder>
+    </appender>
+
+    <!-- Podesi koji loggeri se koriste -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE_JSON"/>
+    </root>
+
+</configuration>

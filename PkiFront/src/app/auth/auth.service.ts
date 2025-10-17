@@ -33,7 +33,7 @@ export interface DecodedToken {
   providedIn: 'root'
 })
 export class AuthService {
-  private apiUrl = 'http://localhost:8080/api/auth';
+  private apiUrl = 'https://localhost:8443/api/auth';
   private readonly AUTH_TOKEN_KEY = 'authToken';
   constructor(private http: HttpClient) { }
 
@@ -64,6 +64,7 @@ export class AuthService {
 
   logout(): void {
     localStorage.removeItem(this.AUTH_TOKEN_KEY);
+    window.location.href = '/login';
   }
   getUserDetails(): DecodedToken | null {
     const token = this.getToken();

@@ -1,0 +1,18 @@
+<nav class="navbar">
+  <div class="navbar-brand">
+    <a routerLink="/">PKI App</a>
+  </div>
+  <div class="navbar-links">
+    <!-- Prikazujemo linkove samo ako je korisnik ulogovan -->
+    <ng-container *ngIf="authService.isLoggedIn()">
+      <a routerLink="/certificates">Certificates</a>
+      <a routerLink="/passwords">Password Manager</a>
+      <button (click)="onLogout()">Logout</button>
+    </ng-container>
+
+    <!-- Prikazujemo Login link ako NIJE ulogovan -->
+    <ng-container *ngIf="!authService.isLoggedIn()">
+      <a routerLink="/login">Login</a>
+    </ng-container>
+  </div>
+</nav>
