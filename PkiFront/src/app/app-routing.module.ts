@@ -5,6 +5,7 @@ import { LoginComponent } from './login/login.component';
 import { DashboardComponent } from './dashboard/dashboard.component';
 import { AuthGuard } from './guards/auth.guard';
 import { CertificateManagementComponent } from './certificate/certificate-management/certificate-management.component';
+import { PasswordManagerComponent } from './password-manager/password-manager.component';
 
 
 const routes: Routes = [
@@ -15,13 +16,19 @@ const routes: Routes = [
     component: DashboardComponent, 
     canActivate: [AuthGuard]
     },
+    {
+    path: 'passwords',
+    component: PasswordManagerComponent,
+    canActivate: [AuthGuard] // Samo ulogovani korisnici mogu ovde
+  },
     { 
       path: 'certificates', 
       component: CertificateManagementComponent, 
       canActivate: [AuthGuard] // Zaštitite rutu
     },
   { path: '', redirectTo: '/register', pathMatch: 'full' },
-  { path: '', redirectTo: '/login', pathMatch: 'full'}
+  { path: '', redirectTo: '/login', pathMatch: 'full'},
+  { path: '**', redirectTo: '' }
 ];
 
 @NgModule({

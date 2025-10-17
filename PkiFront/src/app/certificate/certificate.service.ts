@@ -7,7 +7,7 @@ import { CertificateDTO, NewCertificateDTO } from '../model/certificate.model';
   providedIn: 'root'
 })
 export class CertificateService {
-  private apiUrl = 'http://localhost:8080/api/certificates'; // Putanja do vašeg API-ja
+  private apiUrl = 'https://localhost:8443/api/certificates'; // Putanja do vašeg API-ja
 
   constructor(private http: HttpClient) { }
 
