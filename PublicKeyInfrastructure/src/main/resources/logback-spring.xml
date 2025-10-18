@@ -1,34 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <configuration>
     <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
 
-    <!-- Definicija gde se čuvaju logovi -->
-    <property name="LOG_FILE" value="logs/pki-app.log"/>
+    <property name="LOG_PATH" value="logs"/>
 
-    <!-- Appender za konzolu (korisno za razvoj) -->
+    <!-- Appender za ispis na konzolu (korisno u razvoju) -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <pattern>${CONSOLE_LOG_PATTERN}</pattern>
+            <charset>UTF-8</charset>
         </encoder>
     </appender>
 
-    <!-- Appender za fajl sa ROTACIJOM i JSON formatom -->
-    <appender name="FILE_JSON" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${LOG_FILE}.json</file>
+    <!-- Appender za upis u fajl sa politikom rotacije -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_PATH}/pki-app.log</file>
+
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <!-- Rotacija na dnevnom nivou -->
-            <fileNamePattern>${LOG_FILE}.%d{yyyy-MM-dd}.json.gz</fileNamePattern>
-            <!-- Čuvaj logove 30 dana -->
+            <!-- Rotiraj log fajl svakog dana -->
+            <fileNamePattern>${LOG_PATH}/archived/pki-app.%d{yyyy-MM-dd}.log.gz</fileNamePattern>
+            <!-- Čuvaj arhivu 30 dana. Stariji fajlovi se automatski brišu. -->
             <maxHistory>30</maxHistory>
+            <!-- Maksimalna ukupna veličina arhiviranih logova (npr. 3GB) -->
+            <totalSizeCap>3GB</totalSizeCap>
         </rollingPolicy>
-        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-            <includeMdc>true</includeMdc>
+
+        <encoder>
+            <!--
+                Format loga:
+                %d - Datum i vreme
+                %level - Nivo (INFO, WARN, ERROR)
+                [%thread] - Ime thread-a
+                %logger{36} - Ime klase (loggera)
+                %X{key} - Podatak iz MDC konteksta (npr. %X{requestId})
+                %msg - Log poruka
+                %n - Novi red
+            -->
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{36} [ReqID:%X{requestId}, IP:%X{sourceIp}, User:%X{username}] - %msg%n</pattern>
+            <charset>UTF-8</charset>
         </encoder>
     </appender>
 
-    <!-- Podesi koji loggeri se koriste -->
+    <!-- Definišemo podrazumevani nivo logovanja i gde se logovi šalju -->
     <root level="INFO">
         <appender-ref ref="CONSOLE"/>
-        <appender-ref ref="FILE_JSON"/>
+        <appender-ref ref="FILE"/>
     </root>
 
+    <!-- Možemo definisati detaljniji nivo za naše pakete -->
+    <logger name="com.example.publickeyinfrastructure" level="DEBUG" additivity="false">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
+    </logger>
 </configuration>

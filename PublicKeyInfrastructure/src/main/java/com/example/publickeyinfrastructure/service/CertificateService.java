@@ -30,16 +30,14 @@ import java.security.*;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateNotYetValidException;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static net.logstash.logback.argument.StructuredArguments.kv;
 
 @Service
 public class CertificateService {
+    private static final Logger logger = LoggerFactory.getLogger(CertificateService.class);
     private final CertificateRepository certificateRepository;
 
     public CertificateService(CertificateRepository certificateRepository) {
@@ -49,7 +47,10 @@ public class CertificateService {
     public void createCertificate(NewCertificateDTO dto) throws Exception {
         // 2. Dobavite ime ulogovanog korisnika za potrebe logovanja
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
-
+        logger.info("Certificate creation request initiated by user '{}'.", username,
+                kv("eventType", "CERTIFICATE_CREATION_REQUEST"),
+                kv("certificateType", dto.getCertificateType()),
+                kv("subjectCN", dto.getCommonName()));
         // Inicijalna validacija ulaznih podataka
         Date today = new Date();
 //        if (dto.getValidFrom().before(today) && !DateUtils.isSameDay(dto.getValidFrom(), today)) {
@@ -58,33 +59,49 @@ public class CertificateService {
         if (dto.getValidFrom().after(dto.getValidTo())) {
             throw new InvalidParameterException("Datum 'Valid From' ne može biti posle datuma 'Valid To'.");
         }
-        BigInteger serialNumber = generateSerialNumber();
-        String alias = (dto.getAlias() != null && !dto.getAlias().isEmpty())
-                ? dto.getAlias()
-                : serialNumber.toString();
-        KeyPair keyPair = generateKeyPair();
-        X500Name subjectName = buildX500Name(dto);
-        SubjectData subjectData = new SubjectData(keyPair.getPublic(), subjectName,
-                generateSerialNumber(), dto.getValidFrom(), dto.getValidTo());
+        try {
+            BigInteger serialNumber = generateSerialNumber();
+            String alias = (dto.getAlias() != null && !dto.getAlias().isEmpty())
+                    ? dto.getAlias()
+                    : serialNumber.toString();
+            KeyPair keyPair = generateKeyPair();
+            X500Name subjectName = buildX500Name(dto);
+            SubjectData subjectData = new SubjectData(keyPair.getPublic(), subjectName,
+                    serialNumber, dto.getValidFrom(), dto.getValidTo());
 
-        String privateKeyPassword = generateRandomPassword();
+            String privateKeyPassword = generateRandomPassword();
 
-        if ("ROOT_CA".equals(dto.getCertificateType())) {
-            IssuerData issuerData = new IssuerData(keyPair.getPrivate(), subjectName);
-            certificateRepository.saveRootCertificate(subjectData, issuerData, privateKeyPassword, alias);
-        } else {
-            BigInteger issuerSerialNumber = new BigInteger(dto.getIssuerSerialNumber());
-            boolean isCa = "INTERMEDIATE_CA".equals(dto.getCertificateType());
-            certificateRepository.saveChainedCertificate(subjectData, keyPair, issuerSerialNumber, isCa, privateKeyPassword, alias);
+            if ("ROOT_CA".equals(dto.getCertificateType())) {
+                IssuerData issuerData = new IssuerData(keyPair.getPrivate(), subjectName);
+                certificateRepository.saveRootCertificate(subjectData, issuerData, privateKeyPassword, alias);
+            } else {
+                BigInteger issuerSerialNumber = new BigInteger(dto.getIssuerSerialNumber());
+                boolean isCa = "INTERMEDIATE_CA".equals(dto.getCertificateType());
+                certificateRepository.saveChainedCertificate(subjectData, keyPair, issuerSerialNumber, isCa, privateKeyPassword, alias);
+            }
+
+            logger.info("Successfully created certificate.",
+                    kv("eventType", "CERTIFICATE_CREATED"),
+                    kv("outcome", "SUCCESS"),
+                    kv("serialNumber", serialNumber),
+                    kv("subjectCN", dto.getCommonName()),
+                    kv("alias", alias));
+        } catch (Exception e) {
+            logger.error("Failed to create certificate for subject '{}'.", dto.getCommonName(),
+                    kv("eventType", "CERTIFICATE_CREATION_FAILED"),
+                    kv("outcome", "FAILURE"),
+                    kv("reason", e.getMessage()));
+            throw e; // Prosledi izuzetak dalje
         }
     }
 
 
     public List<CertificateDTO> getAllCertificates() {
+        logger.debug("Fetching all certificates from the repository.");
         try {
             return certificateRepository.findAllCertificates();
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("An error occurred while fetching all certificates.", e);
             throw new RuntimeException("Greška pri čitanju sertifikata: " + e.getMessage());
         }
     }
@@ -111,10 +128,43 @@ public class CertificateService {
     }
 
     private String generateRandomPassword() {
-        return UUID.randomUUID().toString();
+        // Definicija setova karaktera
+        String upperCase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        String lowerCase = "abcdefghijklmnopqrstuvwxyz";
+        String numbers = "0123456789";
+//        String specialChars = "!@#$%^&*()_+-=[]{}|;:,.<>?";
+        int passwordLength = 16;
+
+        // Korišćenje SecureRandom za kriptografski jaku nasumičnost
+        SecureRandom random = new SecureRandom();
+
+        // Lista koja će sadržati karaktere za generisanje lozinke
+        List<Character> passwordChars = new java.util.ArrayList<>();
+
+        // 1. Dodaj po jedan nasumičan karakter iz svake obavezne grupe
+        passwordChars.add(upperCase.charAt(random.nextInt(upperCase.length())));
+        passwordChars.add(lowerCase.charAt(random.nextInt(lowerCase.length())));
+        passwordChars.add(numbers.charAt(random.nextInt(numbers.length())));
+//        passwordChars.add(specialChars.charAt(random.nextInt(specialChars.length())));
+
+        // 2. Popuni ostatak lozinke nasumičnim karakterima iz svih grupa zajedno
+        String allCharsCombined = upperCase + lowerCase + numbers;
+        for (int i = 4; i < passwordLength; i++) {
+            passwordChars.add(allCharsCombined.charAt(random.nextInt(allCharsCombined.length())));
+        }
+
+        // 3. Promešaj listu da bi se izbegli predvidljivi paterni (npr. da je specijalni karakter uvek na kraju)
+        Collections.shuffle(passwordChars, random);
+
+        // 4. Sastavi finalni string od liste karaktera
+        return passwordChars.stream()
+                .collect(StringBuilder::new, StringBuilder::append, StringBuilder::append)
+                .toString();
     }
     public byte[] downloadCertificate(String serialNumber) throws Exception {
-        BigInteger sn = new BigInteger(serialNumber);
-        return certificateRepository.getCertificateFile(sn);
+        logger.info("Request to download certificate file.",
+                kv("eventType", "CERTIFICATE_DOWNLOAD"),
+                kv("serialNumber", serialNumber));
+        return certificateRepository.getCertificateFile(new BigInteger(serialNumber));
     }
 }

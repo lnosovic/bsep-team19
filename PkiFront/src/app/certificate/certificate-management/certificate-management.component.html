@@ -45,7 +45,7 @@
             <option value="">-- Select Issuer --</option>
             <!-- ISPRAVKA: Uklonjen je 'keyvalue' pipe -->
             <option *ngFor="let cert of certificates" [value]="cert.serialNumber.toString()">
-              {{ cert.subjectName }} (SN: {{ cert.serialNumber }})
+              {{ cert.subjectName | formatDn  }} (SN: {{ cert.serialNumber }})
             </option>
           </select>
         </div>
@@ -98,8 +98,8 @@
       <tbody>
         <tr *ngFor="let cert of certificates">
           <td class="serial-number">{{ cert.serialNumber }}</td>
-          <td>{{ cert.subjectName }}</td>
-          <td>{{ cert.issuerName }}</td>
+           <td>{{ cert.subjectName | formatDn }}</td>
+          <td>{{ cert.issuerName | formatDn}}</td>
           <td>{{ cert.validFrom | date:'medium' }}</td>
           <td>{{ cert.validTo | date:'medium' }}</td>
           <td>{{ cert.ca ? 'Yes' : 'No' }}</td>

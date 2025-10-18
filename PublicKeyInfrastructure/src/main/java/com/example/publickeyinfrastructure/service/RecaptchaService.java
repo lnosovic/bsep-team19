@@ -1,15 +1,19 @@
 package com.example.publickeyinfrastructure.service;
 
 import com.example.publickeyinfrastructure.dto.RecaptchaResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
+import static net.logstash.logback.argument.StructuredArguments.kv;
+
 @Service
 public class RecaptchaService {
-
+    private static final Logger logger = LoggerFactory.getLogger(RecaptchaService.class);
     @Value("${google.recaptcha.secret-key}")
     private String secretKey;
 
@@ -37,8 +41,12 @@ public class RecaptchaService {
         RecaptchaResponse response = restTemplate.postForObject(verifyUrl, requestMap, RecaptchaResponse.class);
 
         if (response == null || !response.isSuccess()) {
-            // Možete logovati i 'error-codes' za detaljniju analizu
+            logger.warn("reCAPTCHA validation failed.",
+                    kv("eventType", "RECAPTCHA_FAILED"),
+                    kv("success", response != null ? response.isSuccess() : "null response"),
+                    kv("errorCodes", response != null ? response.getErrorCodes() : "N/A"));
             throw new IllegalArgumentException("reCAPTCHA validation failed.");
         }
+        logger.debug("reCAPTCHA validation successful.");
     }
 }

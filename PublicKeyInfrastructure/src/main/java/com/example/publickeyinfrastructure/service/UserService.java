@@ -70,7 +70,8 @@ public class UserService {
         emailService.sendNotificaitionAsync(user.getEmail(), "Potvrda registracije", "Molimo vas da potvrdite vašu registraciju klikom na link: " + confirmationLink);
         logger.info("New user registered and verification email sent.",
                 kv("eventType", "USER_REGISTERED"),
-                kv("outcome", "SUCCESS")
+                kv("outcome", "SUCCESS"),
+                kv("email", request.getEmail())
         );
     }
 
@@ -98,7 +99,8 @@ public class UserService {
         tokenRepository.delete(verificationToken);
         logger.info("User account successfully activated.",
                 kv("eventType", "ACCOUNT_ACTIVATED"),
-                kv("outcome", "SUCCESS")
+                kv("outcome", "SUCCESS"),
+                kv("email", user.getEmail())
         );
         return "Nalog je uspešno aktiviran!";
     }
@@ -117,7 +119,6 @@ public class UserService {
             // Logovanje uspešne prijave
             logger.info("User successfully logged in.",
                     kv("eventType", "SUCCESSFUL_LOGIN"),
-                    // kv("sourceIp", ...), // Potrebno je dobiti IP adresu iz requesta
                     kv("outcome", "SUCCESS")
             );
 

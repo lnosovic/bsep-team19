@@ -1,15 +1,20 @@
 package com.example.publickeyinfrastructure.service;
 import com.example.publickeyinfrastructure.dto.RegisterRequest;
 import com.nulabinc.zxcvbn.Zxcvbn;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate; // Ili WebClient
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Formatter;
+
+import static net.logstash.logback.argument.StructuredArguments.kv;
+
 @Service
 public class PasswordPolicyValidator {
-
+    private static final Logger logger = LoggerFactory.getLogger(PasswordPolicyValidator.class);
     private static final int MIN_LENGTH = 8;
     private static final int MIN_ZXCVBN_SCORE = 3; // We require a score of "Safely unguessable" or better
 
@@ -96,9 +101,11 @@ public class PasswordPolicyValidator {
                 throw new IllegalArgumentException("This password has been exposed in a data breach. Please choose a different one.");
             }
         } catch (NoSuchAlgorithmException e) {
-
+            logger.error("SHA-1 algorithm not found. Pwned password check cannot be performed.", e);
             System.err.println("SHA-1 algorithm not found.");
         } catch (Exception e) {
+            logger.warn("Could not check password against Pwned Passwords API. Check was skipped. Reason: {}", e.getMessage(),
+                    kv("eventType", "PWNED_CHECK_SKIPPED"));
             System.err.println("Could not check password against Pwned Passwords API: " + e.getMessage());
         }
     }

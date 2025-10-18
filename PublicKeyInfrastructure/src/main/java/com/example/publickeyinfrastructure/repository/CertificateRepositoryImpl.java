@@ -12,6 +12,8 @@ import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,9 +28,11 @@ import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
 
+import static net.logstash.logback.argument.StructuredArguments.kv;
+
 @Repository
 public class CertificateRepositoryImpl implements CertificateRepository {
-
+    private static final Logger logger = LoggerFactory.getLogger(CertificateRepositoryImpl.class);
     private final KeyStoreWriter keyStoreWriter;
     private final KeyStoreReader keyStoreReader;
     private final CertificateEntityRepository entityRepository;
@@ -44,14 +48,25 @@ public class CertificateRepositoryImpl implements CertificateRepository {
 
     @PostConstruct
     private void loadKeystorePassword() {
-        this.keystorePassword = passwordRepository.findAll().stream().findFirst()
-                .orElseThrow(() -> new IllegalStateException("Keystore password not found in database."))
-                .getPassword();
+        try {
+            this.keystorePassword = passwordRepository.findAll().stream().findFirst()
+                    .orElseThrow(() -> new IllegalStateException("Keystore password not found in database."))
+                    .getPassword();
+            logger.info("Keystore password successfully loaded from the database.");
+        } catch (IllegalStateException e) {
+            logger.error("FATAL: Could not load keystore password on startup. Application might not function correctly.",
+                    kv("eventType", "KEYSTORE_PASSWORD_LOAD_FAILED"));
+            throw e;
+        }
     }
 
     @Override
     @Transactional
     public void saveRootCertificate(SubjectData subjectData, IssuerData issuerData, String privateKeyPassword, String alias) throws Exception {
+        logger.info("Attempting to save a new Root CA certificate.",
+                kv("eventType", "ROOT_CERT_SAVE"),
+                kv("alias", alias),
+                kv("serialNumber", subjectData.getSerialNumber()));
         X509CertificateHolder certHolder = CertificateGenerator.generateCertificate(subjectData, issuerData, true, 1);
         JcaX509CertificateConverter certConverter = new JcaX509CertificateConverter().setProvider("BC");
         Certificate certificate = certConverter.getCertificate(certHolder);
@@ -66,11 +81,17 @@ public class CertificateRepositoryImpl implements CertificateRepository {
 
         CertificateEntity entity = new CertificateEntity(subjectData.getSerialNumber(), alias, privateKeyPassword);
         entityRepository.save(entity);
+        logger.info("Successfully saved Root CA certificate.", kv("alias", alias));
     }
 
     @Override
     @Transactional
     public void saveChainedCertificate(SubjectData subjectData, KeyPair subjectKeyPair, BigInteger issuerSerialNumber, boolean isCa, String privateKeyPassword, String alias) throws Exception {
+        logger.info("Attempting to save a new chained certificate.",
+                kv("eventType", "CHAINED_CERT_SAVE"),
+                kv("alias", alias),
+                kv("subjectSerialNumber", subjectData.getSerialNumber()),
+                kv("issuerSerialNumber", issuerSerialNumber));
         // 1. Pronađi metapodatke izdavaoca u bazi
         CertificateEntity issuerEntity = entityRepository.findBySerialNumber(issuerSerialNumber)
                 .orElseThrow(() -> new KeyStoreException("Izdavalac sa serijskim brojem " + issuerSerialNumber + " nije pronađen."));
@@ -92,12 +113,14 @@ public class CertificateRepositoryImpl implements CertificateRepository {
         // getBasicConstraints() vraća -1 ako sertifikat nije CA.
         int issuerPathLen = issuerCert.getBasicConstraints();
         if (issuerPathLen == -1) {
+            logger.warn("Validation failed: Issuer is not a CA.", kv("issuerSerialNumber", issuerSerialNumber));
             throw new CertificateException("Izabrani izdavalac nije CA sertifikat i ne može da potpisuje druge sertifikate.");
         }
 
         // VALIDACIJA 2: Validnost datuma
         if (subjectData.getStartDate().before(issuerCert.getNotBefore()) ||
                 subjectData.getEndDate().after(issuerCert.getNotAfter())) {
+            logger.warn("Validation failed: Certificate validity period is outside issuer's validity.", kv("issuerSerialNumber", issuerSerialNumber));
             throw new InvalidParameterException("Period validnosti novog sertifikata mora biti unutar perioda validnosti sertifikata izdavaoca.");
         }
 
@@ -145,6 +168,7 @@ public class CertificateRepositoryImpl implements CertificateRepository {
         // 6. Sačuvaj metapodatke novog sertifikata u bazu
         CertificateEntity newEntity = new CertificateEntity(subjectData.getSerialNumber(), newAlias, privateKeyPassword);
         entityRepository.save(newEntity);
+        logger.info("Successfully saved chained certificate with alias '{}' signed by issuer '{}'.", newAlias, issuerSerialNumber);
     }
     @Override
     public byte[] getCertificateFile(BigInteger serialNumber) throws Exception {

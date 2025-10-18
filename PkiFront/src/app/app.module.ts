@@ -12,6 +12,7 @@ import { CommonModule, DatePipe } from '@angular/common';
 import { CertificateManagementComponent } from './certificate/certificate-management/certificate-management.component';
 import { NavbarComponent } from './navbar/navbar.component';
 import { PasswordManagerComponent } from './password-manager/password-manager.component';
+import { FormatDnPipe } from './pipes/format-dn.pipe';
 
 @NgModule({
   declarations: [
@@ -20,7 +21,8 @@ import { PasswordManagerComponent } from './password-manager/password-manager.co
     LoginComponent,
     CertificateManagementComponent,
     NavbarComponent,
-    PasswordManagerComponent
+    PasswordManagerComponent,
+    FormatDnPipe
   ],
   imports: [
     BrowserModule,
